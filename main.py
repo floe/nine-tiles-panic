@@ -10,6 +10,7 @@ class Road:
         self.burger = b
         self.alien = al
         self.agent = ag
+        self.done = False
     def __repr__(self):
         return f"  Road[{self.start},{self.end}]: B{self.burger},Al{self.alien},Ag{self.agent}\n"
 
@@ -28,6 +29,11 @@ class Tile:
            tmp += r.__repr__() 
         return f"\nTile: D{self.dogs},G{self.girls},B{self.boys},U{self.ufos},H{self.houses},C{self.captured}\n"+tmp
 
+class Route:
+    def __init__(self,road):
+        self.roads = [road]
+        self.closed = False
+
 tiles = [
     (
         Tile(0,1,0,0,0,0,[Road(3,1,0,0,1)]),
@@ -37,6 +43,61 @@ tiles = [
         Tile(1,0,0,0,0,0,[Road(0,2,0,0,0)])
     )
 ]
+
+def getnextroad(grid,position,direction):
+   if direction == 0:
+        if position in [0,1,2]:
+            return None
+        for road in grid[position - 3].roads:
+            if road.start == 2 or road.end == 2:
+                return (road, position - 3)
+
+   if direction == 1:
+        if position in [2,5,8]:
+            return None
+        for road in grid[position + 1].roads:
+            if road.start == 3 or road.end == 3:
+                return (road, position + 1)
+
+   if direction == 2:
+        if position in [6,7,8]:
+            return None
+        for road in grid[position + 3].roads:
+            if road.start == 0 or road.end == 0:
+                return (road, position + 3)
+
+   if direction == 3:
+        if position in [0,3,6]:
+            return None
+        for road in grid[position - 1].roads:
+            if road.start == 1 or road.end == 1:
+                return (road, position - 1)
+
+   return None
+
+
+def getroutes(grid):
+    routes = []
+    for i in range(len(tiles)):
+        tile = grid[i]
+        if len(tile.roads) == 0:
+            continue
+        for road in tile.roads:
+            if road.done:
+                continue
+            route = Route(road)
+            road.done = True
+            rnext = road
+            while rnext,i := getnextroad(grid,i,rnext.end):
+                route.roads.append(rnext)
+                rnext.done = True
+            rprev = road
+            while rprev,i := getnextroad(grid,i,rprev.start):
+                route.roads.insert(0,rprev)
+                rprev.done = True
+            routes.append(route)    
+                
+    return routes
 
 
 #array for scoring functions, one for each card
@@ -120,11 +181,11 @@ for triple in itertools.permutations(range(25),3):
 
 #main loop
 for perm in itertools.permutations(range(len(tiles))):
-    print(perm)
+    #print(perm)
     for arrangement in range(combinations):
-        print(arrangement)
+        #print(arrangement)
         grid = flip(perm, arrangement)
-        print(grid)
+        #print(grid)
         if islegal(grid):
             for triple in itertools.permutations(range(25),3):
                 val = score(grid, triple)
