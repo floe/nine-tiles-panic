@@ -43,11 +43,14 @@ tiles = [
 #array for scoring functions, one for each card
 scoringfunctions = {}
 
+# rotate tile by 0˚,90˚,180°,270° (only roads are relevant)
 def rotate(tile, rotation):
     for road in tile.roads:
         road.start = (road.start+rotation) % 4
         road.end   = (road.end  +rotation) % 4
+    return tile
 
+# arrangement == all rotations and flips, 8^9 (0-3 = rotation front, 4-7 = rotation back)
 def fliptile(tile, arrangement, i):
     rotation = arrangement // (8^i)
     if rotation > 3:
@@ -55,7 +58,8 @@ def fliptile(tile, arrangement, i):
     else:
         return rotate(tile[0],rotation)
 
-def flip(perm, arrangment):
+# returns a list of tiles where position is given by perm and rotation/flip by arrangement
+def flip(perm, arrangement):
     list = []
     for i in range(9):
         tile = deepcopy(tiles[perm[i]])
@@ -63,14 +67,37 @@ def flip(perm, arrangment):
         list.append(tile)
     return list
 
-#checks if grid given by perm and arrangement is legal, i.e., all roads are correctley connected
+# check if a tile has a road end in direction
+def findroadend(tile,direction):
+    for road in tile.roads:
+        if road.start == direction:
+            return True
+        if road.end == direction:
+            return True
+    return False
+
+# see if two tiles are legally connected by roads
+def checkroads(tile1,tile2,vertical):
+    if vertical:
+        dir1 = 0
+        dir2 = 2
+    else:
+        dir1 = 1
+        dir2 = 3
+    if findroadend(tile1,dir1) and findroadend(tile2,dir2):
+        return True
+    if not findroadend(tile1,dir1) and not findroadend(tile2,dir2):
+        return True
+    return False
+
+# checks if grid given by perm and arrangement is legal, i.e., all roads are correctley connected
 def islegal(perm, arrangement):
     grid = flip(perm, arrangement)
     ret = True
     for i in {0,1,3,4,6,7}:
-        ret = ret and checkroadshorizontally(grid[i],grid[i+1])
+        ret = ret and checkroads(grid[i],grid[i+1],False)
     for i in {0,3,1,4,2,5}:
-        ret = ret & checkroadsvertically(grid[i],grid[i+3])
+        ret = ret & checkroads(grid[i],grid[i+3],True)
     return ret
 
 #computes the score of a grid (given bz perm and arrangement) for the cards in triple
