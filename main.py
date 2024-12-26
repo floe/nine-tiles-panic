@@ -74,41 +74,49 @@ tiles = [
 def getnextroad(grid,position,direction):
    if direction == 0:
         if position in [0,1,2]:
-            return (None,None)
+            return (None,None,None)
         for road in grid[position - 3].roads:
             if road.done:
                 continue
-            if road.start == 2 or road.end == 2:
-                return (road, position - 3)
+            if road.start == 2:
+                return (road, position - 3, 0)
+            if road.end == 2:
+                return (road, position - 3, 1)
 
    if direction == 1:
         if position in [2,5,8]:
-            return (None,None)
+            return (None,None,None)
         for road in grid[position + 1].roads:
             if road.done:
                 continue
-            if road.start == 3 or road.end == 3:
-                return (road, position + 1)
+            if road.start == 3:
+                return (road, position + 1, 0)
+            if road.end == 3:
+                return (road, position + 1, 1)
 
    if direction == 2:
         if position in [6,7,8]:
-            return (None,None)
+            return (None,None,None)
         for road in grid[position + 3].roads:
             if road.done:
                 continue
-            if road.start == 0 or road.end == 0:
-                return (road, position + 3)
+            if road.start == 0:
+                return (road, position + 3, 0)
+            if road.end == 0:
+                return (road, position + 3, 1)
 
    if direction == 3:
         if position in [0,3,6]:
-            return (None,None)
+            return (None,None,None)
         for road in grid[position - 1].roads:
             if road.done:
                 continue
-            if road.start == 1 or road.end == 1:
-                return (road, position - 1)
+            if road.start == 1:
+                return (road, position - 1, 0)
+            if road.end == 1:
+                return (road, position - 1, 1)
 
-   return (None,None)
+   return (None,None,None)
 
 
 def getroutes(grid):
@@ -120,18 +128,24 @@ def getroutes(grid):
         for road in tile.roads:
             if road.done:
                 continue
+
             route = Route(road)
             road.done = True
-            rnext = road
-            while i != None:
-                route.roads.append(rnext)
+
+            rnext,pos,d = getnextroad(grid, i, road.end)
+            while pos != None:
                 rnext.done = True
-                rnext, i = getnextroad(grid, i, rnext.end)
-            rprev = road
-            while i != None:
-                route.roads.insert(0,rprev)
+                route.roads.append(rnext)
+                direction = rnext.end if d == 0 else rnext.start
+                rnext,pos,d = getnextroad(grid, pos, direction)
+
+            rprev,pos,d = getnextroad(grid, i, road.start)
+            while pos != None:
                 rprev.done = True
-                rprev, i = getnextroad(grid, i, rprev.start)
+                route.roads.insert(0,rprev)
+                direction = rprev.end if d == 0 else rprev.start
+                rprev,pos,d = getnextroad(grid, pos, direction)
+
             routes.append(route)    
                 
     return routes
@@ -228,10 +242,8 @@ grid = [
     rotate(tiles[5][1],1)
 ]
 
-#print(grid)
-
-print(islegal(grid))
-
+#print(grid[4])
+#print(getnextroad(grid,1,2))
 print(getroutes(grid))
 
 exit(0)
