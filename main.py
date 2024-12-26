@@ -176,8 +176,8 @@ def findroadend(tile,direction):
 # see if two tiles are legally connected by roads
 def checkroads(tile1,tile2,vertical):
     if vertical:
-        dir1 = 0
-        dir2 = 2
+        dir1 = 2
+        dir2 = 0
     else:
         dir1 = 1
         dir2 = 3
@@ -189,13 +189,13 @@ def checkroads(tile1,tile2,vertical):
 
 # checks if grid given by perm and arrangement is legal, i.e., all roads are correctly connected
 def islegal(grid):
-    ret = True
-    for i in {0}: #,1,3,4,6,7}:
-        ret = ret and checkroads(grid[i],grid[i+1],False)
-    #for i in {0,3,1,4,2,5}:
-    #    ret = ret & checkroads(grid[i],grid[i+3],True)
-    print(ret)
-    return ret
+    for i in {0,1,3,4,6,7}:
+        if not checkroads(grid[i],grid[i+1],False):
+            return False
+    for i in {0,3,1,4,2,5}:
+        if not checkroads(grid[i],grid[i+3],True):
+            return False
+    return True
 
 # computes the score of a grid (given by perm and arrangement) for the cards in triple
 def score(grid, triple):
@@ -217,7 +217,7 @@ for triple in itertools.permutations(range(25),3):
     witness[triple] = []
 
 grid = [
-    rotate(tiles[3][1],1),
+    rotate(tiles[3][1],2),
     tiles[4][1],
     rotate(tiles[0][0],1),
     tiles[2][0],
@@ -228,7 +228,9 @@ grid = [
     rotate(tiles[5][1],1)
 ]
 
-print(grid)
+#print(grid)
+
+print(islegal(grid))
 
 print(getroutes(grid))
 
