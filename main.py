@@ -41,6 +41,27 @@ tiles = [
     ),(
         Tile(0,1,0,0,0,0,[Road(2,1,0,0,1)]),
         Tile(1,0,0,0,0,0,[Road(0,2,0,0,0)])
+    ),(
+        Tile(1,0,0,0,0,0,[Road(0,3,1,0,0), Road(1,2,0,0,0)]),
+        Tile(2,0,0,0,0,1,[])
+    ),(
+        Tile(0,0,0,0,1,0,[Road(1,0,0,1,0),Road(2,3,0,0,0)]),
+        Tile(0,0,1,0,0,0,[Road(0,2,0,0,0),Road(1,3,1,0,0)])
+    ),(
+        Tile(0,1,1,1,0,0,[]),
+        Tile(0,0,0,0,1,0,[Road(2,3,1,0,0)])
+    ),(
+        Tile(0,0,0,1,2,0,[]),
+        Tile(0,0,0,0,1,0,[Road(3,1,1,0,0)])
+    ),(
+        Tile(1,0,0,0,0,0,[Road(2,3,1,0,0)]),
+        Tile(0,0,1,0,0,0,[Road(0,3,0,0,0),Road(2,1,0,0,1)])
+    ),(
+        Tile(0,0,0,0,1,0,[Road(3,2,0,1,0)]),
+        Tile(1,0,0,0,0,0,[Road(0,2,0,0,0),Road(1,3,0,0,1)])
+    ),(
+        Tile(1,0,0,0,0,0,[Road(1,2,1,0,0),Road(0,3,0,0,0)]),
+        Tile(0,0,1,0,0,0,[Road(3,1,0,1,0)])
     )
 ]
 
@@ -49,6 +70,8 @@ def getnextroad(grid,position,direction):
         if position in [0,1,2]:
             return None
         for road in grid[position - 3].roads:
+            if road.done:
+                return None
             if road.start == 2 or road.end == 2:
                 return (road, position - 3)
 
@@ -56,6 +79,8 @@ def getnextroad(grid,position,direction):
         if position in [2,5,8]:
             return None
         for road in grid[position + 1].roads:
+            if road.done:
+                return None
             if road.start == 3 or road.end == 3:
                 return (road, position + 1)
 
@@ -63,6 +88,8 @@ def getnextroad(grid,position,direction):
         if position in [6,7,8]:
             return None
         for road in grid[position + 3].roads:
+            if road.done:
+                return None
             if road.start == 0 or road.end == 0:
                 return (road, position + 3)
 
@@ -70,6 +97,8 @@ def getnextroad(grid,position,direction):
         if position in [0,3,6]:
             return None
         for road in grid[position - 1].roads:
+            if road.done:
+                return None
             if road.start == 1 or road.end == 1:
                 return (road, position - 1)
 
@@ -88,13 +117,15 @@ def getroutes(grid):
             route = Route(road)
             road.done = True
             rnext = road
-            while rnext,i := getnextroad(grid,i,rnext.end):
+            while rnext:
                 route.roads.append(rnext)
                 rnext.done = True
+                rnext, i = getnextroad(grid, i, rnext.end)
             rprev = road
-            while rprev,i := getnextroad(grid,i,rprev.start):
+            while rprev:
                 route.roads.insert(0,rprev)
                 rprev.done = True
+                rpev, i = getnextroad(grid, i, rprev.start)
             routes.append(route)    
                 
     return routes
@@ -187,6 +218,7 @@ for perm in itertools.permutations(range(len(tiles))):
         grid = flip(perm, arrangement)
         #print(grid)
         if islegal(grid):
+            print(getroutes(grid))
             for triple in itertools.permutations(range(25),3):
                 val = score(grid, triple)
                 if val > best[triple]:
