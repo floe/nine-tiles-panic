@@ -2,7 +2,6 @@
 import itertools
 from copy import deepcopy
 
-
 # convention: top 0, right 1, bottom 2, left 3
 class Road:
     def __init__(self,s,e,b,al,ag):
@@ -50,9 +49,9 @@ def rotate(tile, rotation):
         road.end   = (road.end  +rotation) % 4
     return tile
 
-# arrangement == all rotations and flips, 8^9 (0-3 = rotation front, 4-7 = rotation back)
+# arrangement == all rotations and flips, 8**9 (0-3 = rotation front, 4-7 = rotation back)
 def fliptile(tile, arrangement, i):
-    rotation = arrangement // (8^i)
+    rotation = arrangement // (8**i)
     if rotation > 3:
         return rotate(tile[1],rotation-4)
     else:
@@ -61,7 +60,7 @@ def fliptile(tile, arrangement, i):
 # returns a list of tiles where position is given by perm and rotation/flip by arrangement
 def flip(perm, arrangement):
     list = []
-    for i in range(9):
+    for i in range(len(tiles)):
         tile = deepcopy(tiles[perm[i]])
         tile = fliptile(tile,arrangement,i)
         list.append(tile)
@@ -90,25 +89,25 @@ def checkroads(tile1,tile2,vertical):
         return True
     return False
 
-# checks if grid given by perm and arrangement is legal, i.e., all roads are correctley connected
-def islegal(perm, arrangement):
-    grid = flip(perm, arrangement)
+# checks if grid given by perm and arrangement is legal, i.e., all roads are correctly connected
+def islegal(grid):
     ret = True
-    for i in {0,1,3,4,6,7}:
+    for i in {0}: #,1,3,4,6,7}:
         ret = ret and checkroads(grid[i],grid[i+1],False)
-    for i in {0,3,1,4,2,5}:
-        ret = ret & checkroads(grid[i],grid[i+3],True)
+    #for i in {0,3,1,4,2,5}:
+    #    ret = ret & checkroads(grid[i],grid[i+3],True)
+    print(ret)
     return ret
 
-#computes the score of a grid (given bz perm and arrangement) for the cards in triple
-def score(perm, arrangement, triple):
+# computes the score of a grid (given by perm and arrangement) for the cards in triple
+def score(grid, triple):
     sum = 0
-    for rule in triple:
-        sum += scoringfunctions[rule](perm,arrangement)
+    #for rule in triple:
+    #    sum += scoringfunctions[rule](grid)
     return sum
 
 #number of arrangements of the cards, once their order is fixed
-combinations = 8^9
+combinations = 8**len(tiles)
 #dictionary holding the best value for each triple of cards
 best = {}
 #dictionary holding the grid witnessing the best value for each triple of cards 
@@ -120,11 +119,17 @@ for triple in itertools.permutations(range(25),3):
     witness[triple] = []
 
 #main loop
-for perm in itertools.permutations(range(9)):
+for perm in itertools.permutations(range(len(tiles))):
+    print(perm)
     for arrangement in range(combinations):
-        if islegal(perm, arrangement):
+        print(arrangement)
+        grid = flip(perm, arrangement)
+        print(grid)
+        if islegal(grid):
             for triple in itertools.permutations(range(25),3):
-                val = score(perm, arrangement, triple)
+                val = score(grid, triple)
                 if val > best[triple]:
                     best[triple] = val
                     witness[triple] = [perm,arrangement]
+
+#print(witness)
