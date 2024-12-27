@@ -63,7 +63,7 @@ tiles = [
         Tile(0,0,1,0,0,0,[Road(0,3,0,0,0),Road(2,1,0,0,1)])
     ),(
         Tile(0,0,0,0,1,0,[Road(3,2,0,1,0)]),
-        Tile(1,0,0,0,0,0,[Road(0,2,0,0,0),Road(1,3,0,0,1)]) # 7
+        Tile(1,0,0,0,0,0,[Road(0,2,0,0,0),Road(3,1,0,0,1)]) # 7
     ),(
         Tile(1,0,0,0,0,0,[Road(1,2,1,0,0),Road(0,3,0,0,0)]), # 8
         Tile(0,0,1,0,0,0,[Road(3,1,0,1,0)])
@@ -76,8 +76,6 @@ def getnextroad(grid,position,direction):
         if position in [0,1,2]:
             return (None,None,None)
         for road in grid[position - 3].roads:
-            if road.done:
-                continue
             if road.start == 2:
                 return (road, position - 3, 0)
             if road.end == 2:
@@ -87,8 +85,6 @@ def getnextroad(grid,position,direction):
         if position in [2,5,8]:
             return (None,None,None)
         for road in grid[position + 1].roads:
-            if road.done:
-                continue
             if road.start == 3:
                 return (road, position + 1, 0)
             if road.end == 3:
@@ -98,8 +94,6 @@ def getnextroad(grid,position,direction):
         if position in [6,7,8]:
             return (None,None,None)
         for road in grid[position + 3].roads:
-            if road.done:
-                continue
             if road.start == 0:
                 return (road, position + 3, 0)
             if road.end == 0:
@@ -109,8 +103,6 @@ def getnextroad(grid,position,direction):
         if position in [0,3,6]:
             return (None,None,None)
         for road in grid[position - 1].roads:
-            if road.done:
-                continue
             if road.start == 1:
                 return (road, position - 1, 0)
             if road.end == 1:
@@ -138,13 +130,19 @@ def getroutes(grid):
                 route.roads.append(rnext)
                 direction = rnext.end if d == 0 else rnext.start
                 rnext,pos,d = getnextroad(grid, pos, direction)
+                if rnext and rnext.done:
+                    route.closed = True
+                    break
 
             rprev,pos,d = getnextroad(grid, i, road.start)
-            while pos != None:
+            while pos != None and not rprev.done:
                 rprev.done = True
                 route.roads.insert(0,rprev)
                 direction = rprev.end if d == 0 else rprev.start
                 rprev,pos,d = getnextroad(grid, pos, direction)
+                if rprev and rprev.done:
+                    route.closed = True
+                    break
 
             routes.append(route)    
                 
@@ -242,21 +240,29 @@ grid = [
     rotate(tiles[5][1],1)
 ]
 
-#print(grid[4])
+#print(grid[5])
 #print(getnextroad(grid,1,2))
-print(getroutes(grid))
+#print(getroutes(grid))
 
-exit(0)
+#exit(0)
 
 #main loop
+
+import time
+
+nanosecs = time.time_ns()
+
 for perm in itertools.permutations(range(len(tiles))):
-    #print(perm)
+    print(perm)
     for arrangement in range(combinations):
-        #print(arrangement)
+        if arrangement % 1000000 == 0:
+            nanosecs = time.time_ns() - nanosecs
+            print(nanosecs//60000000000)
         grid = flip(perm, arrangement)
         #print(grid)
+        #print(grid)
         if islegal(grid):
-            print(getroutes(grid))
+            getroutes(grid)
             for triple in itertools.permutations(range(25),3):
                 val = score(grid, triple)
                 if val > best[triple]:
