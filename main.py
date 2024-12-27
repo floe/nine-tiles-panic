@@ -148,9 +148,16 @@ def getroutes(grid):
                 
     return routes
 
+def scoringrule_manyroads(grid):
+    return len(getroads(grid))
+
+
+
 
 #array for scoring functions, one for each card
-scoringfunctions = {}
+scoringfunctions = {
+scoringrule_manyroads, 
+}
 
 # rotate tile by 0˚,90˚,180°,270° (only roads are relevant)
 def rotate(tile, rotation):
@@ -175,6 +182,14 @@ def flip(perm, arrangement):
         tile = fliptile(tile,arrangement,i)
         list.append(tile)
     return list
+
+def printgrid(perm,arrangement):
+    out = "\n\n"
+    for i in range(len(tiles)):
+        tile = deepcopy(tiles[perm[i]])
+        tile = fliptile(tile,arrangement,i)
+        out = out + f" tile {i} is the one with number {perm[i]} in our list ({tile.__repr__()}) "
+    return out
 
 # check if a tile has a road end in direction
 def findroadend(tile,direction):
@@ -208,6 +223,19 @@ def islegal(grid):
         if not checkroads(grid[i],grid[i+3],True):
             return False
     return True
+
+def islegaloptimized(grid):
+    hormax = -1
+    for i in {0,1,3,4,6,7}:
+        if not checkroads(grid[i],grid[i+1],False):
+            hormax = i
+    
+    vermax = -1
+    for i in {0,1,2,3,4,5,}:
+        if not checkroads(grid[i],grid[i+3],True):
+            vermax = i
+
+    return max(hormax,vermax)
 
 # computes the score of a grid (given by perm and arrangement) for the cards in triple
 def score(grid, triple):
@@ -250,23 +278,36 @@ grid = [
 
 import time
 
-nanosecs = time.time_ns()
+secs = time.time()
 
 for perm in itertools.permutations(range(len(tiles))):
-    print(perm)
-    for arrangement in range(combinations):
-        if arrangement % 1000000 == 0:
-            nanosecs = time.time_ns() - nanosecs
-            print(nanosecs//60000000000)
+    #print(perm)
+    print(".",end="",flush=True)
+    arrangement = 0
+    total = 0
+    while arrangement < combinations:
         grid = flip(perm, arrangement)
-        #print(grid)
-        #print(grid)
-        if islegal(grid):
+        legal = islegaloptimized(grid)
+        if legal == -1:
+            total += 1
+            print(f"\nlegal configuration: {perm} {arrangement}")
+            print(printgrid(perm,arrangement))
             getroutes(grid)
             for triple in itertools.permutations(range(25),3):
                 val = score(grid, triple)
                 if val > best[triple]:
                     best[triple] = val
                     witness[triple] = [perm,arrangement]
+            arrangement += 1
+        else:
+            arrangement = (arrangement // (8**legal)) * (8**legal) + (8**(legal+1))
+
+    tmp = time.time()
+    diff = tmp - secs
+    if diff % 100 == 0:
+        print(f"current running time: {diff}")
+    secs = tmp
+
+    #print(f"time for entire permutation: {round(diff,2)} seconds. valid: {total}, total: {arrangement}")
 
 #print(witness)
