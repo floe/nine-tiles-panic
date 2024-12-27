@@ -70,10 +70,11 @@ tiles = [
     )
 ]
 
-
+# start at position, find the next potential road in direction
+# return (nextroad, nextposition, start_or_end) or None
 def getnextroad(grid,position,direction):
    if direction == 0:
-        if position in [0,1,2]:
+        if position in [0,1,2]: # can't go up from the top border
             return (None,None,None)
         for road in grid[position - 3].roads:
             if road.start == 2:
@@ -183,6 +184,7 @@ def flip(perm, arrangement):
         list.append(tile)
     return list
 
+# dump a grid (defined by permutation in perm and rotation/flip in arrangment) to a string
 def printgrid(perm,arrangement):
     out = "\n\n"
     for i in range(len(tiles)):
@@ -191,7 +193,7 @@ def printgrid(perm,arrangement):
         out = out + f" tile {i} is the one with number {perm[i]} in our list ({tile.__repr__()}) "
     return out
 
-# check if a tile has a road end in direction
+# check if a tile has a road end at side given by direction
 def findroadend(tile,direction):
     for road in tile.roads:
         if road.start == direction:
@@ -200,44 +202,39 @@ def findroadend(tile,direction):
             return True
     return False
 
-# see if two tiles are legally connected by roads
+# see if two adjacent tiles are legally connected by roads (i.e. no dead ends)
 def checkroads(tile1,tile2,vertical):
-    if vertical:
-        dir1 = 2
-        dir2 = 0
-    else:
-        dir1 = 1
-        dir2 = 3
+    # matching directions on top/bottom or left/right tile
+    dir1 = 2 if vertical else 1
+    dir2 = 0 if vertical else 3
+    # two matching roads
     if findroadend(tile1,dir1) and findroadend(tile2,dir2):
         return True
+    # no matching roads
     if not findroadend(tile1,dir1) and not findroadend(tile2,dir2):
         return True
     return False
 
-# checks if grid given by perm and arrangement is legal, i.e., all roads are correctly connected
+# check if grid is legal, i.e., all roads are correctly connected,
+# or find the highest-numbered tile which has a mismatch
 def islegal(grid):
-    for i in {0,1,3,4,6,7}:
-        if not checkroads(grid[i],grid[i+1],False):
-            return False
-    for i in {0,3,1,4,2,5}:
-        if not checkroads(grid[i],grid[i+3],True):
-            return False
-    return True
 
-def islegaloptimized(grid):
+    # check horizontal connections
     hormax = -1
     for i in {0,1,3,4,6,7}:
         if not checkroads(grid[i],grid[i+1],False):
             hormax = i
-    
+
+    # check vertical connections
     vermax = -1
-    for i in {0,1,2,3,4,5,}:
+    for i in {0,1,2,3,4,5}:
         if not checkroads(grid[i],grid[i+3],True):
             vermax = i
 
+    # maximum of both
     return max(hormax,vermax)
 
-# computes the score of a grid (given by perm and arrangement) for the cards in triple
+# computes the score of a grid for the cards in triple
 def score(grid, triple):
     sum = 0
     #for rule in triple:
@@ -287,7 +284,7 @@ for perm in itertools.permutations(range(len(tiles))):
     total = 0
     while arrangement < combinations:
         grid = flip(perm, arrangement)
-        legal = islegaloptimized(grid)
+        legal = islegal(grid)
         if legal == -1:
             total += 1
             print(f"\nlegal configuration: {perm} {arrangement}")
